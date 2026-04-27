@@ -65,9 +65,13 @@ if gh_julian 'gh auth status' >/dev/null 2>&1; then
   fi
 
   # Make sure the existing token has admin:public_key (a prior login may
-  # have skipped it). `gh auth refresh` is a no-op if the scope is
-  # already granted.
-  gh_julian "gh auth refresh -h github.com -s admin:public_key" || true
+  # have skipped it). `gh auth refresh` would re-prompt the device-code
+  # flow even when the scope is already granted, so check first.
+  if gh_julian 'gh auth status 2>&1' | grep -qE 'Token scopes:.*admin:public_key'; then
+    echo "admin:public_key scope already granted; skipping refresh."
+  else
+    gh_julian "gh auth refresh -h github.com -s admin:public_key" || true
+  fi
 
   PUB_KEY_BODY=$(awk '{print $1" "$2}' "${JULIAN_SSH_KEY}.pub")
   if gh_julian 'gh ssh-key list' 2>/dev/null | grep -qF "${PUB_KEY_BODY}"; then
