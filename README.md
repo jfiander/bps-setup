@@ -64,11 +64,26 @@ The script is interactive at two points:
    sudo systemctl enable --now sidekiq@production
    ```
 
+## Re-running a single step
+
+Each numbered step lives in its own file under [`steps/`](steps/). Pass
+a step number or a name substring to run just that one:
+
+```sh
+sudo bash install.sh 12          # only step 12 (julian's GitHub setup)
+sudo bash install.sh nginx       # only the nginx step
+```
+
+Useful when you want to retry a step in isolation after fixing config
+without re-walking the earlier steps.
+
 ## Layout
 
 | Path | Purpose |
 | --- | --- |
-| [`install.sh`](install.sh) | Main provisioning script (run as root) |
+| [`install.sh`](install.sh) | Coordinator — sources lib + steps with status banner |
+| [`lib/common.sh`](lib/common.sh) | Shared constants, helpers, `pkg_install`, `step_*` |
+| [`steps/`](steps/) | One file per numbered step; each is sourced by the coordinator |
 | [`nginx/bpsd9.conf`](nginx/bpsd9.conf) | nginx + Passenger site config (port 80; ALB terminates TLS) |
 | [`sidekiq@.service`](sidekiq@.service) | Templated systemd unit; instance name is the Rails env |
 | [`bash-env/`](bash-env/) | Files copied into `/home/julian/` (dotfiles supported) |
