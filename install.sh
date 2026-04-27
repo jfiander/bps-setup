@@ -301,8 +301,11 @@ fi
 
 # Copy bash-env files (dotfiles + regular files) from this repo into julian's home.
 BASH_ENV_SRC="${OPS_DIR}/bash-env"
-if [[ -d ${BASH_ENV_SRC} ]] && compgen -G "${BASH_ENV_SRC}/*" >/dev/null; then
+if [[ ! -d ${BASH_ENV_SRC} ]]; then
+  echo "warning: ${BASH_ENV_SRC} not found; skipping bash-env copy." >&2
+else
   shopt -s dotglob nullglob
+  copied=0
   for f in "${BASH_ENV_SRC}"/*; do
     base=$(basename "${f}")
     [[ ${base} == .git || ${base} == .gitkeep || ${base} == README.md ]] && continue
@@ -314,8 +317,10 @@ if [[ -d ${BASH_ENV_SRC} ]] && compgen -G "${BASH_ENV_SRC}/*" >/dev/null; then
     else
       cp -a "${f}" "${JULIAN_HOME}/${base}"
     fi
+    copied=$((copied + 1))
   done
   shopt -u dotglob nullglob
+  echo "bash-env: copied ${copied} item(s) into ${JULIAN_HOME}."
   chown -R julian:julian "${JULIAN_HOME}"
 fi
 
