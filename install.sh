@@ -43,7 +43,7 @@ pkg_install() { nala install -y --no-install-recommends "$@"; }
 # 2. Base packages (build deps for ruby + native gems, mysql client, image libs).
 #
 pkg_install \
-  build-essential git curl ca-certificates gnupg lsb-release pkg-config \
+  build-essential git curl ca-certificates gnupg dirmngr lsb-release pkg-config \
   autoconf bison \
   libssl-dev libreadline-dev zlib1g-dev libyaml-dev libffi-dev libgdbm-dev \
   libncurses5-dev libxml2-dev libxslt1-dev \
@@ -145,11 +145,32 @@ systemctl enable --now redis-server
 # 7. nginx + Phusion Passenger from the official Phusion apt repo.
 #
 install -d -m 0755 /etc/apt/keyrings
-if [[ ! -s /etc/apt/keyrings/phusion.gpg ]]; then
-  curl -fsSL https://oss-binaries.phusionpassenger.com/auto-software-signing-gpg-key.txt \
-    | gpg --dearmor -o /etc/apt/keyrings/phusion.gpg
-  chmod 0644 /etc/apt/keyrings/phusion.gpg
-fi
+# Always refresh. Two sources, merged into one keyring:
+#   1. Phusion's auto-key bundle URL (canonical)
+#   2. The current release-signing key fetched directly from a public
+#      keyserver, in case the bundle is lagging behind a key rotation.
+# Keep this list in sync with whatever Phusion is currently using to sign
+# the Release.gpg for the active Ubuntu codename.
+PHUSION_KEY_IDS=(D870AB033FB45BD1 561F9B9CAC40B2F7)
+PHUSION_KEYRING=/etc/apt/keyrings/phusion.gpg
+
+curl -fsSL https://oss-binaries.phusionpassenger.com/auto-software-signing-gpg-key.txt \
+  | gpg --dearmor --yes -o "${PHUSION_KEYRING}"
+
+# Use a throwaway GNUPGHOME so we don't depend on /root/.gnupg existing
+# and don't leave dirmngr state behind.
+GPG_TMP=$(mktemp -d)
+chmod 700 "${GPG_TMP}"
+for ks in hkps://keys.openpgp.org hkp://keyserver.ubuntu.com:80; do
+  if gpg --homedir "${GPG_TMP}" \
+       --no-default-keyring --keyring "${PHUSION_KEYRING}" \
+       --keyserver "${ks}" --recv-keys "${PHUSION_KEY_IDS[@]}"; then
+    break
+  fi
+done
+gpgconf --homedir "${GPG_TMP}" --kill all 2>/dev/null || true
+rm -rf "${GPG_TMP}"
+chmod 0644 "${PHUSION_KEYRING}"
 cat >/etc/apt/sources.list.d/passenger.list <<EOF
 deb [signed-by=/etc/apt/keyrings/phusion.gpg] https://oss-binaries.phusionpassenger.com/apt/passenger ${UBUNTU_CODENAME} main
 EOF
