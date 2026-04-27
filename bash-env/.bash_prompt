@@ -1,0 +1,52 @@
+PROMPT_COMMAND=__prompt_command
+
+ansi_color() {
+  fg="\001\033[${1}m\002"
+  bg="\001\033[${2}m\002"
+
+  if [ $# -eq 1 ]; then
+    echo $fg
+  else
+    echo "$fg$bg"
+  fi
+}
+
+ansi_reset() {
+  echo "\001\033[0m\002"
+}
+
+ansi_string() {
+  if [ $# -eq 2 ]; then
+    colors=$1
+    text=$2
+  elif [ $# -eq 3 ]; then
+    colors="$1 $2"
+    text=$3
+  fi
+
+  echo "$(ansi_color ${colors})${text}$(ansi_reset)"
+}
+
+prompt_hostname() {
+  if [ -z "$PROMPT_HOSTNAME" ]; then
+    export PROMPT_HOSTNAME=$(/usr/local/bin/jaws instance)
+  fi
+}
+
+__prompt_command() {
+  local exit_status="$?"
+
+  prompt_hostname
+
+  local time=$(ansi_string 95 "\t")
+  local host=$(ansi_string 36 "$PROMPT_HOSTNAME")
+  local user=$(ansi_string 92 "\u")
+  local dir=$(ansi_string 35 "\w")
+  local prompt="\\$"
+
+  PS1="$time $host $user $dir $prompt "
+
+  if [ "$exit_status" != 0 ]; then
+    PS1="$(ansi_color 31)$exit_status$(ansi_reset) $PS1"
+  fi
+}

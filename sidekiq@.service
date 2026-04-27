@@ -1,0 +1,36 @@
+# /etc/systemd/system/sidekiq@.service
+#
+# Templated unit — the instance name is the Rails environment.
+# Enable per stage: systemctl enable --now sidekiq@production
+
+[Unit]
+Description=sidekiq (%i)
+After=syslog.target network.target redis-server.service
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/bpsd9/current
+
+Environment=RAILS_ENV=%i
+Environment=RBENV_ROOT=/opt/rbenv
+Environment=PATH=/opt/rbenv/shims:/opt/rbenv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# Greatly reduce Ruby memory fragmentation and heap usage
+# https://www.mikeperham.com/2018/04/25/taming-rails-memory-bloat/
+Environment=MALLOC_ARENA_MAX=2
+
+ExecStart=/opt/rbenv/shims/bundle exec sidekiq -e %i
+
+User=deploy
+Group=deploy
+UMask=022
+
+RestartSec=1
+Restart=on-failure
+
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=sidekiq-%i
+
+[Install]
+WantedBy=multi-user.target

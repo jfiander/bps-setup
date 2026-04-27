@@ -1,0 +1,30 @@
+[alias]
+	lol = log --graph --pretty=format:\"%C(auto)%h %C(cyan)[%cr]%Creset %C(auto)% D %s\"
+	lold = log --graph --pretty=format:\"%C(auto)%h %C(cyan)[%cr] %Cgreen%an%Creset %C(auto)%d %s\" --all
+	pt = !git push && git push --tags
+	pti = !git tag $(increment) && git push && git push --tags
+	lola = log --graph --pretty=format:\"%C(auto)%h %C(cyan)[%cr]%Creset %C(auto)% D %s\" --all
+	lolaa = log --graph --pretty=format:\"%C(auto)%h %C(cyan)[%ar]%Creset %C(auto)%d %s\" --all
+	loln = log --graph --pretty=format:\"%C(auto)%h %C(cyan)[%cr] %Cgreen%an%Creset %C(auto)% D %s\"
+	lolan = log --graph --pretty=format:\"%C(auto)%h %C(cyan)[%cr] %Cgreen%an%Creset %C(auto)% D %s\" --all
+	shovel = !git add . && git commit --amend
+	wdiff = diff --word-diff=color --unified=1
+	isnow = reset --hard
+	taglist = tag --sort=v:refname
+	lolt = log --graph --pretty=format:\"%C(auto)%h %C(cyan)[%cr]%Cgreen% an%x09%Creset%C(auto)% D %s\" --all
+[user]
+	name = Julian Fiander
+	email = jsfiander@gmail.com
+[push]
+	default = current
+	followtags = true
+[color]
+	ui = true
+[init]
+	defaultBranch = main
+[rerere]
+	enabled = true
+[column]
+	ui = auto
+[branch]
+	sort = -committerdate
