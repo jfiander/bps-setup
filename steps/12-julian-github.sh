@@ -90,11 +90,19 @@ fi
 
 sudo -u julian -H install -d -m 0755 "${JULIAN_HOME}/repos"
 
+# Tell git/ssh which IdentityFile to use. bash-env's .ssh/config is
+# copied at the end of this step and pins the same key, so future use
+# of git as julian Just Works — but on a first run we have to specify
+# explicitly because no ssh config exists yet.
+GIT_SSH_FOR_JULIAN="ssh -i ${JULIAN_SSH_KEY} -o IdentitiesOnly=yes"
+
 if [[ ! -d ${JULIAN_HOME}/repos/bpsd9-ssh ]]; then
-  sudo -u julian -H git clone git@github.com:jfiander/bpsd9-ssh.git \
+  sudo -u julian -H GIT_SSH_COMMAND="${GIT_SSH_FOR_JULIAN}" \
+    git clone git@github.com:jfiander/bpsd9-ssh.git \
     "${JULIAN_HOME}/repos/bpsd9-ssh"
 else
-  sudo -u julian -H git -C "${JULIAN_HOME}/repos/bpsd9-ssh" pull --ff-only || true
+  sudo -u julian -H GIT_SSH_COMMAND="${GIT_SSH_FOR_JULIAN}" \
+    git -C "${JULIAN_HOME}/repos/bpsd9-ssh" pull --ff-only || true
 fi
 
 JAWS_SRC="${JULIAN_HOME}/repos/bpsd9-ssh/jaws/run.rb"
