@@ -37,10 +37,12 @@ sudo bash ~/bps-setup/install.sh
 
 The script is interactive at two points:
 
-1. **Paste julian's public key.** Right after the user is created, the
-   script prompts you to paste the public key that should be authorized
-   for `julian` (it's written to `/home/julian/.ssh/authorized_keys`).
-   Blank line to skip (e.g. on a re-run).
+1. **Paste an additional public key for julian (optional).** Right after
+   the user is created, the script seeds
+   `/home/julian/.ssh/authorized_keys` from
+   `/home/ubuntu/.ssh/authorized_keys` (so the key you launched the
+   instance with works for julian immediately) and prompts for an extra
+   key. Blank line to accept just the seeded keys.
 2. **GitHub login for julian.** The script runs `gh auth login --web` as
    `julian` so it can register the freshly-generated SSH key on GitHub.
    Follow the on-screen one-time code prompt. If you skip, the script

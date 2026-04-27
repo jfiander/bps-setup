@@ -77,27 +77,37 @@ julian ALL=(ALL) NOPASSWD: ALL
 EOF
 visudo -cf /etc/sudoers.d/julian >/dev/null
 
-# Authorize a public key for julian. Required so you can log in as julian
-# after sshd is hardened to pubkey-only in step 4. Re-runnable: pasting the
-# same key twice is a no-op. Press Enter on a blank line to skip (e.g. when
-# re-running and the key is already in place).
+# Authorize public keys for julian. Required so you can log in as julian
+# after sshd is hardened to pubkey-only in step 4.
+#
+# Sources, deduped:
+#   1. /home/ubuntu/.ssh/authorized_keys (so the AWS default key Just Works
+#      for julian too)
+#   2. an optional pasted key from this prompt
+#
+# Re-runnable: existing keys aren't re-added.
 JULIAN_AUTH_KEYS=/home/julian/.ssh/authorized_keys
-echo
-echo "==> Paste julian's public SSH key (e.g. 'ssh-ed25519 AAAA... julian@laptop')."
-echo "    Blank line to skip."
-read -r -p "julian pubkey: " JULIAN_PUBKEY
-if [[ -n ${JULIAN_PUBKEY} ]]; then
-  install -m 0600 -o julian -g julian /dev/null "${JULIAN_AUTH_KEYS}.tmp"
-  if [[ -s ${JULIAN_AUTH_KEYS} ]]; then
-    cat "${JULIAN_AUTH_KEYS}" > "${JULIAN_AUTH_KEYS}.tmp"
-  fi
-  if ! grep -qxF "${JULIAN_PUBKEY}" "${JULIAN_AUTH_KEYS}.tmp"; then
-    echo "${JULIAN_PUBKEY}" >> "${JULIAN_AUTH_KEYS}.tmp"
-  fi
-  mv "${JULIAN_AUTH_KEYS}.tmp" "${JULIAN_AUTH_KEYS}"
-  chown julian:julian "${JULIAN_AUTH_KEYS}"
-  chmod 0600 "${JULIAN_AUTH_KEYS}"
+touch "${JULIAN_AUTH_KEYS}"
+
+append_pubkey() {
+  local line=$1
+  [[ -z ${line} || ${line} =~ ^[[:space:]]*# ]] && return 0
+  grep -qxF "${line}" "${JULIAN_AUTH_KEYS}" || echo "${line}" >> "${JULIAN_AUTH_KEYS}"
+}
+
+UBUNTU_AUTH_KEYS=/home/ubuntu/.ssh/authorized_keys
+if [[ -s ${UBUNTU_AUTH_KEYS} ]]; then
+  while IFS= read -r line; do append_pubkey "${line}"; done < "${UBUNTU_AUTH_KEYS}"
 fi
+
+echo
+echo "==> Paste an additional public SSH key for julian, or blank line to skip."
+echo "    (julian already accepts /home/ubuntu/.ssh/authorized_keys.)"
+read -r -p "julian pubkey: " JULIAN_PUBKEY
+append_pubkey "${JULIAN_PUBKEY}"
+
+chown julian:julian "${JULIAN_AUTH_KEYS}"
+chmod 0600 "${JULIAN_AUTH_KEYS}"
 
 #
 # 4. Harden sshd: keys only, no PAM password auth, no root login.
