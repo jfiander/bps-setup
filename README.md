@@ -64,6 +64,24 @@ The script is interactive at two points:
    sudo systemctl enable --now sidekiq@production
    ```
 
+## Baking an AMI
+
+The first run of `install.sh` produces a working instance, but if you've
+been debugging on it (deploys, gh logins, log accumulation) you'll want
+to strip environment-specific state before snapshotting so the AMI is
+reusable. Run, logged in as julian:
+
+```sh
+sudo bash ~/bps-setup/scripts/prepare-for-ami.sh
+```
+
+It stops sidekiq, wipes `/var/www/bpsd9/{releases,current,repo,shared}`,
+clears shell histories + caches, resets cloud-init state, removes SSH
+host keys + machine-id (regenerated on first boot of derived instances),
+truncates logs, and removes the temporary `ubuntu` user. After it
+finishes, stop the instance and run `aws ec2 create-image` (i.e.
+`jaws ami staging` from the jumpbox).
+
 ## Re-running a single step
 
 Each numbered step lives in its own file under [`steps/`](steps/). Pass
@@ -84,6 +102,7 @@ without re-walking the earlier steps.
 | [`install.sh`](install.sh) | Coordinator — sources lib + steps with status banner |
 | [`lib/common.sh`](lib/common.sh) | Shared constants, helpers, `pkg_install`, `step_*` |
 | [`steps/`](steps/) | One file per numbered step; each is sourced by the coordinator |
+| [`scripts/prepare-for-ami.sh`](scripts/prepare-for-ami.sh) | Pre-bake cleanup; run once before snapshotting |
 | [`nginx/bpsd9.conf`](nginx/bpsd9.conf) | nginx + Passenger site config (port 80; ALB terminates TLS) |
 | [`sidekiq@.service`](sidekiq@.service) | Templated systemd unit; instance name is the Rails env |
 | [`bash-env/`](bash-env/) | Files copied into `/home/julian/` (dotfiles supported) |
