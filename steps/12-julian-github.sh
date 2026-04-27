@@ -24,9 +24,13 @@ if [[ ! -s ${JULIAN_SSH_KEY} ]]; then
   sudo -u julian -H ssh-keygen -t ed25519 -N '' \
     -C "julian@$(hostname)" -f "${JULIAN_SSH_KEY}"
 fi
-sudo -u julian -H ssh-keyscan -t ed25519,ecdsa,rsa github.com \
-  >> "${JULIAN_HOME}/.ssh/known_hosts" 2>/dev/null || true
-sudo -u julian -H bash -c "sort -u -o ${JULIAN_HOME}/.ssh/known_hosts ${JULIAN_HOME}/.ssh/known_hosts"
+# Append + dedupe github.com host keys. The redirection has to happen
+# inside the sudo subshell so julian owns the file (otherwise root writes
+# it and the next sort fails with EACCES).
+sudo -u julian -H bash -c "
+  ssh-keyscan -t ed25519,ecdsa,rsa github.com >> ${JULIAN_HOME}/.ssh/known_hosts 2>/dev/null || true
+  sort -u -o ${JULIAN_HOME}/.ssh/known_hosts ${JULIAN_HOME}/.ssh/known_hosts
+"
 
 KEY_TITLE="julian@$(hostname) ($(date +%Y-%m-%d))"
 

@@ -1,6 +1,9 @@
 # Ruby installs (2.7.4 master, 3.3.11 intermediate/global, 4.0.3 edge).
 for v in "${RUBY_VERSIONS[@]}"; do
   rbenv install -s "${v}"
+  # Update rubygems first so each Ruby gets the newest rubygems it can
+  # support (the unbounded `--system` form picks the latest compatible).
+  RBENV_VERSION="${v}" rbenv exec gem update --system --no-document
   # Latest bundler requires Ruby >= 3.2; pin older rubies to the last
   # compatible release.
   IFS=. read -r rb_major rb_minor _ <<<"${v}"
