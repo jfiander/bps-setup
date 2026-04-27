@@ -42,6 +42,17 @@ OPS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 pkg_install() { nala install -y --no-install-recommends "$@"; }
 
+# If rbenv has already been installed (by step 8 or a previous run),
+# put it on PATH so later steps can call rbenv/gem/bundle directly.
+# This is the difference that lets `sudo bash install.sh 9` work in
+# isolation: step 8 also does this, but a single-step invocation skips
+# step 8 entirely.
+if [[ -x ${RBENV_ROOT}/bin/rbenv ]]; then
+  export RBENV_ROOT
+  export PATH="${RBENV_ROOT}/bin:${RBENV_ROOT}/shims:${PATH}"
+  eval "$(rbenv init -)"
+fi
+
 ensure_user() {
   local user=$1 sudoer=$2
   if ! id -u "${user}" >/dev/null 2>&1; then
