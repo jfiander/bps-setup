@@ -109,6 +109,16 @@ JAWS_SRC="${JULIAN_HOME}/repos/bpsd9-ssh/jaws/run.rb"
 if [[ -f ${JAWS_SRC} ]]; then
   chmod +x "${JAWS_SRC}"
   ln -sf "${JAWS_SRC}" /usr/local/bin/jaws
+
+  # jaws's runtime gems on the global rbenv ruby. If the jaws dir has a
+  # Gemfile, prefer bundler; otherwise install the known list directly.
+  JAWS_DIR=$(dirname "${JAWS_SRC}")
+  if [[ -f ${JAWS_DIR}/Gemfile ]]; then
+    (cd "${JAWS_DIR}" && bundle install --quiet)
+  else
+    gem install --no-document colorize
+  fi
+  rbenv rehash
 else
   echo "warning: ${JAWS_SRC} not found; skipping jaws symlink." >&2
 fi
