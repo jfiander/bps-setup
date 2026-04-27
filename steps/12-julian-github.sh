@@ -105,6 +105,49 @@ else
     git -C "${JULIAN_HOME}/repos/bpsd9-ssh" pull --ff-only || true
 fi
 
+# AWS CLI v2 — required by jaws to query EC2 instance metadata.
+#
+# Noble doesn't ship two libs that the v2 PyInstaller bundle expects:
+# - the unversioned `libsqlite3.so` (only `libsqlite3.so.0` is in the
+#   default runtime package; the unversioned symlink ships with
+#   libsqlite3-dev).
+# - `libffi.so.6` — Ubuntu dropped libffi6 in 22.04+, but the AWS CLI
+#   bundle still hardlinks against it. Pull the focal-era .deb from the
+#   Ubuntu archive (it coexists fine with libffi.so.8 — different
+#   SONAME) before installing the CLI itself.
+ARCH=$(dpkg --print-architecture)
+case "${ARCH}" in
+  amd64)
+    AWS_ARCH=x86_64
+    LIBFFI6_URL=http://archive.ubuntu.com/ubuntu/pool/main/libf/libffi/libffi6_3.2.1-8_amd64.deb
+    ;;
+  arm64)
+    AWS_ARCH=aarch64
+    LIBFFI6_URL=http://ports.ubuntu.com/ubuntu-ports/pool/main/libf/libffi/libffi6_3.2.1-9_arm64.deb
+    ;;
+  *)
+    echo "unsupported architecture for AWS CLI: ${ARCH}" >&2
+    exit 1
+    ;;
+esac
+
+if ! ldconfig -p | grep -q '\blibffi\.so\.6\b'; then
+  TMP_LIBFFI=$(mktemp -d)
+  curl -fsSL "${LIBFFI6_URL}" -o "${TMP_LIBFFI}/libffi6.deb"
+  dpkg -i "${TMP_LIBFFI}/libffi6.deb"
+  rm -rf "${TMP_LIBFFI}"
+fi
+
+if ! command -v aws >/dev/null; then
+  pkg_install unzip libsqlite3-dev
+  TMP_AWSCLI=$(mktemp -d)
+  curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${AWS_ARCH}.zip" \
+    -o "${TMP_AWSCLI}/awscliv2.zip"
+  unzip -q "${TMP_AWSCLI}/awscliv2.zip" -d "${TMP_AWSCLI}"
+  "${TMP_AWSCLI}/aws/install" --update
+  rm -rf "${TMP_AWSCLI}"
+fi
+
 JAWS_SRC="${JULIAN_HOME}/repos/bpsd9-ssh/jaws/run.rb"
 if [[ -f ${JAWS_SRC} ]]; then
   chmod +x "${JAWS_SRC}"
