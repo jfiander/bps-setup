@@ -34,24 +34,46 @@ sudo -u julian -H bash -c "
 
 KEY_TITLE="julian@$(hostname) ($(date +%Y-%m-%d))"
 
-if sudo -u julian -H gh auth status >/dev/null 2>&1; then
+# Run gh from julian's home — sudo preserves cwd, and julian can't stat
+# /home/ubuntu/* (mode 0750), so anything that calls back into git from
+# the script's cwd fails with EACCES.
+gh_julian() { sudo -u julian -H bash -c 'cd ~ && '"$*"; }
+
+if gh_julian 'gh auth status' >/dev/null 2>&1; then
   echo "gh already authenticated for julian; skipping login."
 else
   echo
   echo "==> Authenticating julian with GitHub (interactive)."
   echo "    Choose: GitHub.com / HTTPS / Login with a web browser."
   echo "    If you skip this (Ctrl-C), the key will be added manually below."
-  if ! sudo -u julian -H gh auth login --git-protocol https --hostname github.com --web; then
+  # admin:public_key scope is needed for `gh ssh-key add` below.
+  if ! gh_julian 'gh auth login --git-protocol https --hostname github.com --web --scopes admin:public_key'; then
     echo "gh auth login skipped or failed; falling back to manual key entry."
   fi
 fi
 
-if sudo -u julian -H gh auth status >/dev/null 2>&1; then
+if gh_julian 'gh auth status' >/dev/null 2>&1; then
+  # Sanity-check the GitHub user before we register an SSH key against
+  # them or try to clone private repos. EXPECTED_GH_USER comes from
+  # lib/common.sh; override there if the owner of bpsd9-ssh changes.
+  AUTHED_GH_USER=$(gh_julian 'gh api user --jq .login')
+  echo "gh authenticated as: ${AUTHED_GH_USER}"
+  if [[ -n "${EXPECTED_GH_USER:-}" && "${AUTHED_GH_USER}" != "${EXPECTED_GH_USER}" ]]; then
+    echo "ERROR: gh is logged in as '${AUTHED_GH_USER}' but '${EXPECTED_GH_USER}' was expected." >&2
+    echo "Run: sudo -u julian -H bash -c 'cd ~ && gh auth logout -h github.com' and re-run this step." >&2
+    exit 1
+  fi
+
+  # Make sure the existing token has admin:public_key (a prior login may
+  # have skipped it). `gh auth refresh` is a no-op if the scope is
+  # already granted.
+  gh_julian "gh auth refresh -h github.com -s admin:public_key" || true
+
   PUB_KEY_BODY=$(awk '{print $1" "$2}' "${JULIAN_SSH_KEY}.pub")
-  if sudo -u julian -H gh ssh-key list 2>/dev/null | grep -qF "${PUB_KEY_BODY}"; then
+  if gh_julian 'gh ssh-key list' 2>/dev/null | grep -qF "${PUB_KEY_BODY}"; then
     echo "julian's public key is already registered on GitHub; skipping."
   else
-    sudo -u julian -H gh ssh-key add "${JULIAN_SSH_KEY}.pub" --title "${KEY_TITLE}"
+    gh_julian "gh ssh-key add ${JULIAN_SSH_KEY}.pub --title '${KEY_TITLE}'"
   fi
 else
   echo

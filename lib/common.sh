@@ -30,6 +30,9 @@ APP_NAME=bpsd9
 APP_ROOT=/var/www/${APP_NAME}
 JULIAN_HOME=/home/julian
 JULIAN_SSH_KEY="${JULIAN_HOME}/.ssh/github"
+# GitHub account that owns the private repos this AMI clones (bpsd9-ssh,
+# etc.). Used by step 12 to verify gh is logged in as the right user.
+EXPECTED_GH_USER=jfiander
 PHUSION_KEYRING=/etc/apt/keyrings/phusion.gpg
 # Phusion's Release.gpg signing keys. The `auto-software-signing-gpg-key.txt`
 # bundle has historically lagged behind rotations, so we also pull these by
