@@ -7,12 +7,16 @@ Run on a clean Ubuntu instance to bake an AMI that can serve any environment
 ## What it installs
 
 - Build deps + `nala`
-- `deploy` user (Capistrano target, locked password) and `julian` user
-  (admin, NOPASSWD sudo, locked password)
+- `julian` user (admin, NOPASSWD sudo, locked password) — the app uid:
+  Capistrano deploys as julian, Passenger runs as julian, and the sidekiq
+  unit is pinned to `julian:webapp`
+- `deploy` user (locked password) — legacy, retained but no longer the
+  Capistrano target; it stays in `webapp` so nothing that predates the
+  switch breaks
 - Hardened sshd: pubkey only, no PAM/password auth, no root login
 - Redis (sidekiq backend)
 - nginx + Phusion Passenger from the official Phusion apt repo
-- System rbenv at `/opt/rbenv` (group-writable for `deploy`) with Ruby
+- System rbenv at `/opt/rbenv` (group-writable via `staff`) with Ruby
   2.7.4, 3.3.11 (global), and 4.0.3
 - Node.js 22 + Yarn (via corepack)
 - Templated `sidekiq@.service` systemd unit
@@ -51,14 +55,11 @@ The script is interactive at two points:
 
 ## After it finishes
 
-1. Drop `/home/deploy/.ssh/authorized_keys` (Capistrano deploy key — the
-   script does not seed this; julian's key is handled by the prompt
-   above).
-2. Open a second SSH session as `julian` to verify pubkey + sudo work
+1. Open a second SSH session as `julian` to verify pubkey + sudo work
    **before logging out of `ubuntu`**.
-3. Bake the AMI.
-4. Launch a new instance, run `cap <stage> deploy` from your workstation.
-5. After the first deploy populates `/var/www/bpsd9/current`, enable the
+2. Bake the AMI.
+3. Launch a new instance, run `cap <stage> deploy` from your workstation.
+4. After the first deploy populates `/var/www/bpsd9/current`, enable the
    sidekiq unit per stage:
    ```sh
    sudo systemctl enable --now sidekiq@production

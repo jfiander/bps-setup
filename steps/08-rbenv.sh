@@ -1,4 +1,4 @@
-# System rbenv at /opt/rbenv, group-writable so deploy can install gems.
+# System rbenv at /opt/rbenv, group-writable so the app user can install gems.
 if [[ ! -d ${RBENV_ROOT} ]]; then
   git clone https://github.com/rbenv/rbenv.git "${RBENV_ROOT}"
 fi
@@ -10,6 +10,7 @@ fi
 
 chgrp -R staff "${RBENV_ROOT}"
 chmod -R g+rwxs "${RBENV_ROOT}"
+usermod -aG staff julian
 usermod -aG staff deploy
 
 install -m 0644 /dev/stdin /etc/profile.d/rbenv.sh <<EOF

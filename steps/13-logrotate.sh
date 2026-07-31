@@ -7,6 +7,6 @@ ${APP_ROOT}/shared/log/*.log {
   delaycompress
   notifempty
   copytruncate
-  su deploy deploy
+  su julian webapp
 }
 EOF
