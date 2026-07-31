@@ -1,5 +1,8 @@
-# deploy — Capistrano target; locked password, no sudo.
-# julian — admin; locked password, NOPASSWD sudo.
+# julian — admin and app uid (Capistrano, Passenger, sidekiq); locked
+#          password, NOPASSWD sudo.
+# deploy — legacy; was the Capistrano target before the switch to direct
+#          deploys as julian. Kept so pre-existing files retain a valid
+#          owner; locked password, no sudo, no authorized_keys.
 ensure_user deploy nosudo
 ensure_user julian sudo
 

@@ -8,8 +8,8 @@
 #   sudo bash install.sh nginx      # run only the step matching "nginx"
 #
 # Run on a clean Ubuntu LTS server image. Idempotent — safe to re-run.
-# The user provisions the EC2 instance, opens SSH, drops authorized_keys
-# for the deploy user, and tests a Capistrano deploy after this completes.
+# The user provisions the EC2 instance, opens SSH as julian to confirm
+# pubkey + sudo work, and tests a Capistrano deploy after this completes.
 
 SCRIPT_START=${SECONDS}
 SETUP_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
