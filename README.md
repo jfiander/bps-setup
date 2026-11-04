@@ -104,6 +104,7 @@ without re-walking the earlier steps.
 | [`lib/common.sh`](lib/common.sh) | Shared constants, helpers, `pkg_install`, `step_*` |
 | [`steps/`](steps/) | One file per numbered step; each is sourced by the coordinator |
 | [`scripts/prepare-for-ami.sh`](scripts/prepare-for-ami.sh) | Pre-bake cleanup; run once before snapshotting |
+| [`scripts/upload_log_file.sh`](scripts/upload_log_file.sh) | Uploads rotated production logs to S3; step 13 installs it for logrotate |
 | [`nginx/bpsd9.conf`](nginx/bpsd9.conf) | nginx + Passenger site config (port 80; ALB terminates TLS) |
 | [`sidekiq@.service`](sidekiq@.service) | Templated systemd unit; instance name is the Rails env |
 | [`bash-env/`](bash-env/) | Files copied into `/home/julian/` (dotfiles supported) |
