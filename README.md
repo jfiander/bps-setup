@@ -17,13 +17,15 @@ Run on a clean Ubuntu instance to bake an AMI that can serve any environment
 - Redis (sidekiq backend)
 - nginx + Phusion Passenger from the official Phusion apt repo
 - System rbenv at `/opt/rbenv` (group-writable via `staff`) with Ruby
-  2.7.4, 3.3.11 (global), and 4.0.3
+  3.3.13 (global) and 4.0.9
 - Node.js 22 + Yarn (via corepack)
 - Templated `sidekiq@.service` systemd unit
 - GitHub CLI, an ed25519 SSH key for `julian`, and `julian`'s personal
   bash environment from [`bash-env/`](bash-env/)
 - `jaws` symlink (`/usr/local/bin/jaws`) from the private
   `jfiander/bpsd9-ssh` repo
+- A 2 GB `/swapfile` (swappiness 10), as a memory cushion rather than
+  working memory
 
 The script is idempotent — re-run it after pulling updates.
 

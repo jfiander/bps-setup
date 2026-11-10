@@ -23,8 +23,9 @@ UBUNTU_CODENAME="$(. /etc/os-release && echo "${VERSION_CODENAME}")"
 # Path / version constants. Keep this list in sync with the rest of the
 # tree; step files only consume these, never redefine them.
 RBENV_ROOT=/opt/rbenv
-RUBY_VERSIONS=(2.7.4 3.3.11 4.0.3)
-RUBY_GLOBAL=3.3.11
+RUBY_VERSIONS=(3.3.13 4.0.9)
+RUBY_GLOBAL=3.3.13
+SWAP_SIZE=2G
 NODE_MAJOR=22
 APP_NAME=bpsd9
 APP_ROOT=/var/www/${APP_NAME}

@@ -1,4 +1,4 @@
-# Ruby installs (2.7.4 master, 3.3.11 intermediate/global, 4.0.3 edge).
+# Ruby installs (3.3.13 global, 4.0.9 edge).
 # RubyGems 4.x and Bundler 4.x both require Ruby >= 3.2.
 # - For Ruby >= 3.2: update rubygems unbounded (latest 4.x), latest bundler.
 # - For Ruby < 3.2: leave rubygems alone (each version's last compatible
